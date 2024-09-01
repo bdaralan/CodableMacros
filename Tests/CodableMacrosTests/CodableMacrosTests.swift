@@ -9,7 +9,6 @@ import XCTest
 import CodableMacrosMacros
 
 let testMacros: [String: Macro.Type] = [
-    "stringify": StringifyMacro.self,
     "Decodable": DecodableMacro.self,
     "CodingKey": CodingKeyMacro.self
 ]
@@ -17,28 +16,23 @@ let testMacros: [String: Macro.Type] = [
 
 final class CodableMacrosTests: XCTestCase {
     
-    func testDecodableMacroOnStruct() throws {
+    func test_Decodable_macro_on_struct() throws {
         #if canImport(CodableMacrosMacros)
         let declaration =  """
         @Decodable 
         public struct User {
-            
+        
             let id: String
-            
+        
             var username: String
-            
-            @CodingKey("preferred_name")
-            var preferredName: String
         }
         """
         let expansion = """
         public struct User {
-            
+
             let id: String
-            
+        
             var username: String
-            
-            var preferredName: String
         }
         
         extension User: Decodable {
@@ -46,14 +40,12 @@ final class CodableMacrosTests: XCTestCase {
             public enum CodingKeys: String, CodingKey {
                 case id
                 case username
-                case preferredName = "preferred_name"
             }
         
             public init(from decoder: any Decoder) throws {
                 let container = try decoder.container(keyedBy: CodingKeys.self)
                 id = try container.decode(String.self, forKey: .id)
                 username = try container.decode(String.self, forKey: .username)
-                preferredName = try container.decode(String.self, forKey: .preferredName)
             }
         }
         """
@@ -63,7 +55,86 @@ final class CodableMacrosTests: XCTestCase {
         #endif
     }
     
-    func testDecodableMacroOnClass() throws {
+    func test_CodingKey_macro_on_struct() throws {
+        #if canImport(CodableMacrosMacros)
+        let declaration =  """
+        @Decodable
+        public struct User {
+        
+            let id: String
+            
+            @CodingKey("user_name")
+            var username: String
+        }
+        """
+        let expansion = """
+        public struct User {
+
+            let id: String
+            
+            var username: String
+        }
+
+        extension User: Decodable {
+
+            public enum CodingKeys: String, CodingKey {
+                case id
+                case username = "user_name"
+            }
+
+            public init(from decoder: any Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                id = try container.decode(String.self, forKey: .id)
+                username = try container.decode(String.self, forKey: .username)
+            }
+        }
+        """
+        assertMacroExpansion(declaration, expandedSource: expansion, macros: testMacros)
+        #else
+        throw XCTSkip("macros are only supported when running tests for the host platform")
+        #endif
+    }
+    
+    func test_Decodable_macro_on_class() throws {
+        #if canImport(CodableMacrosMacros)
+        let declaration =  """
+        @Decodable
+        public class User {
+            
+            let id: String
+            
+            var username: String
+        }
+        """
+        let expansion = """
+        public class User {
+            
+            let id: String
+            
+            var username: String
+        
+            public required init(from decoder: any Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                id = try container.decode(String.self, forKey: .id)
+                username = try container.decode(String.self, forKey: .username)
+            }
+        }
+        
+        extension User: Decodable {
+        
+            public enum CodingKeys: String, CodingKey {
+                case id
+                case username
+            }
+        }
+        """
+        assertMacroExpansion(declaration, expandedSource: expansion, macros: testMacros)
+        #else
+        throw XCTSkip("macros are only supported when running tests for the host platform")
+        #endif
+    }
+    
+    func test_Decodable_macro_on_final_class() throws {
         #if canImport(CodableMacrosMacros)
         let declaration =  """
         @Decodable
@@ -80,6 +151,12 @@ final class CodableMacrosTests: XCTestCase {
             let id: String
             
             var username: String
+        
+            public init(from decoder: any Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                id = try container.decode(String.self, forKey: .id)
+                username = try container.decode(String.self, forKey: .username)
+            }
         }
         
         extension User: Decodable {
@@ -87,12 +164,6 @@ final class CodableMacrosTests: XCTestCase {
             public enum CodingKeys: String, CodingKey {
                 case id
                 case username
-            }
-        
-            public init(from decoder: any Decoder) throws {
-                let container = try decoder.container(keyedBy: CodingKeys.self)
-                id = try container.decode(String.self, forKey: .id)
-                username = try container.decode(String.self, forKey: .username)
             }
         }
         """

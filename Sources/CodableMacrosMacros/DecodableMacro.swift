@@ -10,15 +10,30 @@ public enum DecodableMacro {}
 extension DecodableMacro: MemberMacro {
     
     public static func expansion(
-      of node: AttributeSyntax,
-      providingMembersOf declaration: some DeclGroupSyntax,
-      conformingTo protocols: [TypeSyntax],
-      in context: some MacroExpansionContext
+        of node: AttributeSyntax,
+        providingMembersOf declaration: some DeclGroupSyntax,
+        conformingTo protocols: [TypeSyntax],
+        in context: some MacroExpansionContext
     ) throws -> [DeclSyntax] {
-        guard declaration.is(StructDeclSyntax.self) || declaration.is(ClassDeclSyntax.self) else {
-            context.diagnose(Diagnostic(node: node, message: Message.mustBeStructOrClass))
+        // for struct the macro expands everything in the extension
+        if declaration.is(StructDeclSyntax.self) {
             return []
         }
+        
+        // for class the macro expands the constructor in the class declaration
+        // then expands everything else in the extension
+        if declaration.is(ClassDeclSyntax.self) {
+            var modifiers = parseAccessModifiers(declaration.modifiers)
+            if !declaration.modifiers.contains(where: { $0.name.text == "final" }) {
+                modifiers.append(DeclModifierSyntax(name: .keyword(.required)))
+            }
+            let properties = declaration.memberBlock.members.filterStoredProperties()
+            let decodableConstructor = makeDecodableConstructor(modifiers: modifiers, properties: properties)
+            return [DeclSyntax(decodableConstructor)]
+        }
+        
+        // show unsupported declaration diagnostic message
+        context.diagnose(Diagnostic(node: node, message: Message.unsupportedType))
         return []
     }
 }
@@ -34,18 +49,52 @@ extension DecodableMacro: ExtensionMacro {
         conformingTo protocols: [TypeSyntax],
         in context: some MacroExpansionContext
     ) throws -> [ExtensionDeclSyntax] {
-        let declarationName: String
+        let name = parseDeclarationName(declaration)
+        let modifiers = parseAccessModifiers(declaration.modifiers)
+        let properties = declaration.memberBlock.members.filterStoredProperties()
+        let enumCodingKeys = makeCodingKeys(modifiers: modifiers, properties: properties)
+        let extensionInheritanceClause = InheritanceClauseSyntax(
+            inheritedTypes: InheritedTypeListSyntax {
+                InheritedTypeSyntax(type: IdentifierTypeSyntax(name: "Decodable"))
+            }
+        )
         
-        switch declaration {
-        case let decl as StructDeclSyntax:
-            declarationName = decl.name.text
-        case let decl as ClassDeclSyntax:
-            declarationName = decl.name.text
-        default:
-            return []
+        let extensionMembers = MemberBlockItemListSyntax {
+            MemberBlockItemSyntax(leadingTrivia: .newlines(2), decl: enumCodingKeys)
+            if declaration.is(StructDeclSyntax.self) {
+                let decodableConstructor = makeDecodableConstructor(modifiers: modifiers, properties: properties)
+                MemberBlockItemSyntax(leadingTrivia: .newlines(2), decl: decodableConstructor)
+            }
         }
         
-        let mappedAccessModifiers = declaration.modifiers.compactMap { modifier -> DeclModifierSyntax? in
+        let extensionDecl = ExtensionDeclSyntax(
+            extendedType: IdentifierTypeSyntax(name: .identifier(name)),
+            inheritanceClause: extensionInheritanceClause,
+            memberBlock: MemberBlockSyntax(
+                members: extensionMembers
+            )
+        )
+        
+        return [extensionDecl]
+    }
+}
+
+// MARK: - Helper Methods
+
+extension DecodableMacro {
+    
+    static func parseDeclarationName(_ decl: DeclGroupSyntax) -> String {
+        switch decl {
+        case let decl as EnumDeclSyntax: decl.name.text
+        case let decl as ActorDeclSyntax: decl.name.text
+        case let decl as ClassDeclSyntax: decl.name.text
+        case let decl as StructDeclSyntax: decl.name.text
+        default: "<unexpected>"
+        }
+    }
+    
+    static func parseAccessModifiers(_ modifiers: DeclModifierListSyntax) -> DeclModifierListSyntax {
+        let modifiers = modifiers.compactMap { modifier -> DeclModifierSyntax? in
             switch modifier.name.text {
             case "open", "public": return DeclModifierSyntax(name: .keyword(.public))
             case "fileprivate": return DeclModifierSyntax(name: .keyword(.fileprivate))
@@ -53,17 +102,16 @@ extension DecodableMacro: ExtensionMacro {
             default: return nil
             }
         }
-        
-        let accessModifiers = DeclModifierListSyntax {
-            for modifier in mappedAccessModifiers {
+        return DeclModifierListSyntax {
+            for modifier in modifiers {
                 modifier
             }
         }
-        
-        let storedProperties = declaration.memberBlock.members.filterStoredProperties()
-        
-        let enumCodingKeys = EnumDeclSyntax(
-            modifiers: accessModifiers,
+    }
+    
+    static func makeCodingKeys(modifiers: DeclModifierListSyntax, properties: [VariableDeclSyntax]) -> EnumDeclSyntax {
+        EnumDeclSyntax(
+            modifiers: modifiers,
             name: .identifier("CodingKeys"),
             inheritanceClause: InheritanceClauseSyntax(
                 inheritedTypes: InheritedTypeListSyntax {
@@ -73,16 +121,17 @@ extension DecodableMacro: ExtensionMacro {
             ),
             memberBlock: MemberBlockSyntax(
                 members: MemberBlockItemListSyntax {
-                    for enumCase in storedProperties.makeCodingKeysEnumCases() {
+                    for enumCase in properties.makeCodingKeysEnumCases() {
                         MemberBlockItemSyntax(decl: enumCase)
                     }
                 }
             )
         )
-        
-        
-        let initFromDecoder = InitializerDeclSyntax(
-            modifiers: accessModifiers,
+    }
+    
+    static func makeDecodableConstructor(modifiers: DeclModifierListSyntax, properties: [VariableDeclSyntax]) -> InitializerDeclSyntax {
+        InitializerDeclSyntax(
+            modifiers: modifiers,
             signature: FunctionSignatureSyntax(
                 parameterClause: FunctionParameterClauseSyntax(
                     parameters: FunctionParameterListSyntax {
@@ -101,7 +150,7 @@ extension DecodableMacro: ExtensionMacro {
             body: CodeBlockSyntax(
                 statements: CodeBlockItemListSyntax {
                     "let container = try decoder.container(keyedBy: CodingKeys.self)"
-                    for property in storedProperties.compactMap({ $0.parsedNameType() }) {
+                    for property in properties.compactMap({ $0.parseNameType() }) {
                         let name = property.name
                         let type = property.type
                         "\(raw: name) = try container.decode(\(raw: type).self, forKey: .\(raw: name))"
@@ -109,35 +158,16 @@ extension DecodableMacro: ExtensionMacro {
                 }
             )
         )
-        
-        let extensionInheritanceClause = InheritanceClauseSyntax(
-            inheritedTypes: InheritedTypeListSyntax {
-                InheritedTypeSyntax(type: IdentifierTypeSyntax(name: "Decodable"))
-            }
-        )
-        
-        let extensionDecl = ExtensionDeclSyntax(
-            extendedType: IdentifierTypeSyntax(name: .identifier(declarationName)),
-            inheritanceClause: extensionInheritanceClause,
-            memberBlock: MemberBlockSyntax(
-                members: MemberBlockItemListSyntax {
-                    MemberBlockItemSyntax(leadingTrivia: .newlines(2), decl: enumCodingKeys)
-                    MemberBlockItemSyntax(leadingTrivia: .newlines(2), decl: initFromDecoder)
-                }
-            )
-        )
-        
-        return [extensionDecl]
     }
 }
 
-// MARK: - ExpansionError
+// MARK: - Components
 
 extension DecodableMacro {
     
     enum Message: String, DiagnosticMessage {
         
-        case mustBeStructOrClass
+        case unsupportedType
         
         var diagnosticID: MessageID {
             MessageID(domain: "CodableMacros", id: rawValue)
@@ -145,76 +175,14 @@ extension DecodableMacro {
     
         var severity: DiagnosticSeverity {
             switch self {
-            case .mustBeStructOrClass: .error
+            case .unsupportedType: .error
             }
         }
         
         var message: String {
             switch self {
-            case .mustBeStructOrClass: "@Decodable only supports struct or class at this time"
+            case .unsupportedType: "@Decodable only supports struct or class at this time"
             }
-        }
-    }
-}
-
-extension MemberBlockItemListSyntax {
-    
-    /// Filters for declarations that are stored properties.
-    func filterStoredProperties() -> [VariableDeclSyntax] {
-        compactMap { member -> VariableDeclSyntax? in
-            guard let variable = member.decl.as(VariableDeclSyntax.self) else { return nil }
-            guard let binding = variable.bindings.first else { return nil }
-            guard binding.accessorBlock == nil else { return nil }
-            return variable
-        }
-    }
-}
-
-extension VariableDeclSyntax {
-    
-    /// Returns a given string inside the `@CodingKey` attribute.
-    ///
-    /// Returns `nil` when the declaration does not have this attribute.
-    func parsedAttributeCodingKeyRawValue() -> String? {
-        for attribute in attributes {
-            guard let attribute = attribute.as(AttributeSyntax.self) else { continue }
-            guard let attributeName = attribute.attributeName.as(IdentifierTypeSyntax.self) else { continue }
-            guard attributeName.name.text == "CodingKey" else { continue }
-            guard let arguments = attribute.arguments?.as(LabeledExprListSyntax.self) else { continue }
-            guard let argument = arguments.first else { continue }
-            guard let expression = argument.expression.as(StringLiteralExprSyntax.self) else { continue }
-            guard let segment = expression.segments.first?.as(StringSegmentSyntax.self) else { continue }
-            return segment.content.text
-        }
-        return nil
-    }
-    
-    func parsedNameType() -> (name: String, type: String)? {
-        guard let binding = bindings.first else { return nil }
-        guard binding.accessorBlock == nil else { return nil }
-        guard let pattern = binding.pattern.as(IdentifierPatternSyntax.self) else { return nil }
-        guard let typeAnnotation = binding.typeAnnotation else { return nil }
-        guard let type = typeAnnotation.type.as(IdentifierTypeSyntax.self) else { return nil }
-        return (pattern.identifier.text, type.name.text)
-    }
-}
-
-extension Collection where Element == VariableDeclSyntax {
-    
-    /// Maps each declaration into enum case declaration.
-    func makeCodingKeysEnumCases() -> [EnumCaseDeclSyntax] {
-        compactMap { decl -> EnumCaseDeclSyntax? in
-            guard let binding = decl.bindings.first else { return nil }
-            guard let pattern = binding.pattern.as(IdentifierPatternSyntax.self) else { return nil }
-            let atCodingKeyRawValue = decl.parsedAttributeCodingKeyRawValue()
-            let caseName = pattern.identifier
-            let caseRawValue = atCodingKeyRawValue.map { caseRawValue in
-                InitializerClauseSyntax(value: StringLiteralExprSyntax(content: caseRawValue))
-            }
-            let caseDecl = EnumCaseDeclSyntax {
-                EnumCaseElementSyntax(name: caseName, rawValue: caseRawValue)
-            }
-            return caseDecl
         }
     }
 }
