@@ -10,7 +10,8 @@ import CodableMacrosMacros
 
 let testMacros: [String: Macro.Type] = [
     "stringify": StringifyMacro.self,
-    "Decodable": DecodableMacro.self
+    "Decodable": DecodableMacro.self,
+    "CodingKey": CodingKeyMacro.self
 ]
 #endif
 
@@ -25,6 +26,9 @@ final class CodableMacrosTests: XCTestCase {
             let id: String
             
             var username: String
+            
+            @CodingKey("preferred_name")
+            var preferredName: String
         }
         """
         let expansion = """
@@ -33,6 +37,8 @@ final class CodableMacrosTests: XCTestCase {
             let id: String
             
             var username: String
+            
+            var preferredName: String
         }
         
         extension User: Decodable {
@@ -40,12 +46,14 @@ final class CodableMacrosTests: XCTestCase {
             public enum CodingKeys: String, CodingKey {
                 case id
                 case username
+                case preferredName = "preferred_name"
             }
         
             public init(from decoder: any Decoder) throws {
                 let container = try decoder.container(keyedBy: CodingKeys.self)
                 id = try container.decode(String.self, forKey: .id)
                 username = try container.decode(String.self, forKey: .username)
+                preferredName = try container.decode(String.self, forKey: .preferredName)
             }
         }
         """
