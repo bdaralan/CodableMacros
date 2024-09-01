@@ -10,37 +10,46 @@ import CodableMacrosMacros
 
 let testMacros: [String: Macro.Type] = [
     "stringify": StringifyMacro.self,
+    "Decodable": DecodableMacro.self
 ]
 #endif
 
 final class CodableMacrosTests: XCTestCase {
-    func testMacro() throws {
+    
+    func testDecodableMacro() throws {
         #if canImport(CodableMacrosMacros)
-        assertMacroExpansion(
-            """
-            #stringify(a + b)
-            """,
-            expandedSource: """
-            (a + b, "a + b")
-            """,
-            macros: testMacros
-        )
-        #else
-        throw XCTSkip("macros are only supported when running tests for the host platform")
-        #endif
-    }
-
-    func testMacroWithStringLiteral() throws {
-        #if canImport(CodableMacrosMacros)
-        assertMacroExpansion(
-            #"""
-            #stringify("Hello, \(name)")
-            """#,
-            expandedSource: #"""
-            ("Hello, \(name)", #""Hello, \(name)""#)
-            """#,
-            macros: testMacros
-        )
+        let declaration =  """
+        @Decodable 
+        public struct User {
+            
+            let id: String
+            
+            var username: String
+        }
+        """
+        let expansion = """
+        public struct User {
+            
+            let id: String
+            
+            var username: String
+        }
+        
+        extension User: Decodable {
+        
+            public enum CodingKeys: String, CodingKey {
+                case id
+                case username
+            }
+        
+            public init(from decoder: any Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                id = try container.decode(String.self, forKey: .id)
+                username = try container.decode(String.self, forKey: .username)
+            }
+        }
+        """
+        assertMacroExpansion(declaration, expandedSource: expansion, macros: testMacros)
         #else
         throw XCTSkip("macros are only supported when running tests for the host platform")
         #endif

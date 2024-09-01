@@ -29,5 +29,6 @@ public struct StringifyMacro: ExpressionMacro {
 struct CodableMacrosPlugin: CompilerPlugin {
     let providingMacros: [Macro.Type] = [
         StringifyMacro.self,
+        DecodableMacro.self
     ]
 }
