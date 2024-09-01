@@ -275,4 +275,107 @@ final class CodableMacrosTests: XCTestCase {
         throw XCTSkip("macros are only supported when running tests for the host platform")
         #endif
     }
+    
+    func test_Decodable_macro_on_class_initial_value() throws {
+        #if canImport(CodableMacrosMacros)
+        let declaration =  """
+        @Decodable
+        public class Values {
+            var string1: String = "str1"
+            var string2: String = String("str2")
+            var string3: String = String(3)
+            var string4: String = String(4.0)
+            var string5: String = .init()
+            var integer1: Int = 1
+            var integer2: Int = Int(2)
+            var integer3: Int = Int(3.0)
+            var integer4: Int = .min
+            var double1: Double = 1
+            var double2: Double = 2.0
+            var double3: Double = Double(3)
+            var double4: Double = Double(4.0)
+            var double5: Double = .pi
+            var boolean1: Bool = true
+            var boolean2: Bool = false
+            var boolean3: Bool = Bool(true)
+            var boolean4: Bool = Bool(false)
+            var boolean5: Bool = .random()
+        }
+        """
+        let expansion = """
+        public class Values {
+            var string1: String = "str1"
+            var string2: String = String("str2")
+            var string3: String = String(3)
+            var string4: String = String(4.0)
+            var string5: String = .init()
+            var integer1: Int = 1
+            var integer2: Int = Int(2)
+            var integer3: Int = Int(3.0)
+            var integer4: Int = .min
+            var double1: Double = 1
+            var double2: Double = 2.0
+            var double3: Double = Double(3)
+            var double4: Double = Double(4.0)
+            var double5: Double = .pi
+            var boolean1: Bool = true
+            var boolean2: Bool = false
+            var boolean3: Bool = Bool(true)
+            var boolean4: Bool = Bool(false)
+            var boolean5: Bool = .random()
+        
+            public required init(from decoder: any Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                string1 = try container.decodeIfPresent(String.self, forKey: .string1) ?? "str1"
+                string2 = try container.decodeIfPresent(String.self, forKey: .string2) ?? String("str2")
+                string3 = try container.decodeIfPresent(String.self, forKey: .string3) ?? String(3)
+                string4 = try container.decodeIfPresent(String.self, forKey: .string4) ?? String(4.0)
+                string5 = try container.decodeIfPresent(String.self, forKey: .string5) ?? .init()
+                integer1 = try container.decodeIfPresent(Int.self, forKey: .integer1) ?? 1
+                integer2 = try container.decodeIfPresent(Int.self, forKey: .integer2) ?? Int(2)
+                integer3 = try container.decodeIfPresent(Int.self, forKey: .integer3) ?? Int(3.0)
+                integer4 = try container.decodeIfPresent(Int.self, forKey: .integer4) ?? .min
+                double1 = try container.decodeIfPresent(Double.self, forKey: .double1) ?? 1
+                double2 = try container.decodeIfPresent(Double.self, forKey: .double2) ?? 2.0
+                double3 = try container.decodeIfPresent(Double.self, forKey: .double3) ?? Double(3)
+                double4 = try container.decodeIfPresent(Double.self, forKey: .double4) ?? Double(4.0)
+                double5 = try container.decodeIfPresent(Double.self, forKey: .double5) ?? .pi
+                boolean1 = try container.decodeIfPresent(Bool.self, forKey: .boolean1) ?? true
+                boolean2 = try container.decodeIfPresent(Bool.self, forKey: .boolean2) ?? false
+                boolean3 = try container.decodeIfPresent(Bool.self, forKey: .boolean3) ?? Bool(true)
+                boolean4 = try container.decodeIfPresent(Bool.self, forKey: .boolean4) ?? Bool(false)
+                boolean5 = try container.decodeIfPresent(Bool.self, forKey: .boolean5) ?? .random()
+            }
+        }
+
+        extension Values: Decodable {
+
+            public enum CodingKeys: String, CodingKey {
+                case string1
+                case string2
+                case string3
+                case string4
+                case string5
+                case integer1
+                case integer2
+                case integer3
+                case integer4
+                case double1
+                case double2
+                case double3
+                case double4
+                case double5
+                case boolean1
+                case boolean2
+                case boolean3
+                case boolean4
+                case boolean5
+            }
+        }
+        """
+        assertMacroExpansion(declaration, expandedSource: expansion, macros: testMacros)
+        #else
+        throw XCTSkip("macros are only supported when running tests for the host platform")
+        #endif
+    }
 }
