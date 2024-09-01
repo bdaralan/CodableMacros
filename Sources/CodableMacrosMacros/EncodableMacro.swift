@@ -37,10 +37,13 @@ extension EncodableMacro: MemberMacro {
         conformingTo protocols: [TypeSyntax],
         in context: some MacroExpansionContext
     ) throws -> [DeclSyntax] {
-        // for struct the macro expands everything in the extension
-        if declaration.is(StructDeclSyntax.self) {
+        // for struct and class the macro expands everything in the extension
+        if declaration.is(StructDeclSyntax.self) || declaration.is(ClassDeclSyntax.self) {
             return []
         }
+        
+        // show unsupported declaration diagnostic message
+        context.diagnose(Diagnostic(node: node, message: Message.unsupportedType))
         return []
     }
 }
@@ -61,6 +64,7 @@ extension EncodableMacro: ExtensionMacro {
         let properties = declaration.memberBlock.members.filterStoredProperties()
         
         let enumCodingKeys = DecodableMacro.makeCodingKeys(modifiers: modifiers, properties: properties)
+        let encodeMethod = makeEncodableEncodeMethod(modifiers: modifiers, properties: properties)
         
         let extensionInheritanceClause = InheritanceClauseSyntax(
             inheritedTypes: InheritedTypeListSyntax {
@@ -70,10 +74,7 @@ extension EncodableMacro: ExtensionMacro {
         
         let extensionMembers = MemberBlockItemListSyntax {
             MemberBlockItemSyntax(leadingTrivia: .newlines(2), decl: enumCodingKeys)
-            if declaration.is(StructDeclSyntax.self) {
-                let encodableEncodeMethod = makeEncodableEncodeMethod(modifiers: modifiers, properties: properties)
-                MemberBlockItemSyntax(leadingTrivia: .newlines(2), decl: encodableEncodeMethod)
-            }
+            MemberBlockItemSyntax(leadingTrivia: .newlines(2), decl: encodeMethod)
         }
         
         let extensionDecl = ExtensionDeclSyntax(

@@ -8,7 +8,7 @@ import CodableMacros
     var username: String
 }
 
-@Decodable class DecodableUserReference {
+@Decodable class DecodableUserClass {
     
     @CodingKey("user_data")
     var user: DecodableUser
@@ -18,7 +18,7 @@ import CodableMacros
     }
 }
 
-@Decodable final class DecodableUserFinalReference {
+@Decodable final class DecodableUserFinalClass {
     
     @CodingKey("user_data")
     var user: DecodableUser
@@ -50,7 +50,7 @@ import CodableMacros
     var boolean5: Bool = .random()
 }
 
-@Decodable class DecodableValuesReference {
+@Decodable class DecodableValuesClass {
     var string1: String = "str1"
     var string2: String = String("str2")
     var string3: String = String(3)
@@ -78,4 +78,17 @@ import CodableMacros
     
     @CodingKey("user_name")
     var username: String
+}
+
+@Encodable class EncodableUserClass {
+    
+    let id: String
+    
+    @CodingKey("user_name")
+    var username: String
+    
+    init(id: String, username: String) {
+        self.id = id
+        self.username = username
+    }
 }
