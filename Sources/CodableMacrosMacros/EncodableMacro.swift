@@ -37,6 +37,14 @@ extension EncodableMacro: MemberMacro {
         conformingTo protocols: [TypeSyntax],
         in context: some MacroExpansionContext
     ) throws -> [DeclSyntax] {
+        let attributeNames = declaration.parseAttributeNames()
+        
+        // cannot use Decodable and Encodable together
+        // DecodableMacro will be the one to emit the diagnostic message
+        if attributeNames.contains("Decodable") && attributeNames.contains("Encodable") {
+            return []
+        }
+        
         // for struct and class the macro expands everything in the extension
         if declaration.is(StructDeclSyntax.self) || declaration.is(ClassDeclSyntax.self) {
             return []
@@ -59,6 +67,13 @@ extension EncodableMacro: ExtensionMacro {
         conformingTo protocols: [TypeSyntax],
         in context: some MacroExpansionContext
     ) throws -> [ExtensionDeclSyntax] {
+        let attributeNames = declaration.parseAttributeNames()
+        
+        // cannot use Decodable and Encodable together
+        if attributeNames.contains("Decodable") && attributeNames.contains("Encodable") {
+            return []
+        }
+        
         let name = DecodableMacro.parseDeclarationName(declaration)
         let modifiers = DecodableMacro.parseAccessModifiers(declaration.modifiers)
         let properties = declaration.memberBlock.members.filterStoredProperties()

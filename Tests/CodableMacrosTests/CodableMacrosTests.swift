@@ -633,4 +633,33 @@ final class CodableMacrosTests: XCTestCase {
         throw XCTSkip("macros are only supported when running tests for the host platform")
         #endif
     }
+    
+    func test_Decodable_Encodable_macros_when_uses_together_shows_fixit_replace_with_Codable() throws {
+        #if canImport(CodableMacrosMacros)
+        let declaration =  """
+        @Decodable
+        @Encodable
+        public struct User {
+        
+            let id: String
+        
+            var username: String
+        }
+        """
+        let expansion = """
+        public struct User {
+        
+            let id: String
+        
+            var username: String
+        }
+        """
+        let message = "@Decodable and @Encodable cannot be applied together"
+        let fixit = FixItSpec(message: "Replace with @Codable")
+        let diagnostic = DiagnosticSpec(message: message, line: 1, column: 1, fixIts: [fixit])
+        assertMacroExpansion(declaration, expandedSource: expansion, diagnostics: [diagnostic], macros: testMacros)
+        #else
+        throw XCTSkip("macros are only supported when running tests for the host platform")
+        #endif
+    }
 }

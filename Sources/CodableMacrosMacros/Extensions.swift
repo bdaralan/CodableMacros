@@ -2,6 +2,37 @@ import SwiftSyntax
 import SwiftSyntaxBuilder
 import SwiftSyntaxMacros
 
+extension DeclGroupSyntax {
+    
+    /// Returns a list of attribute names.
+    func parseAttributeNames() -> some Collection<String> {
+        attributes.lazy
+            .compactMap({ $0.as(AttributeSyntax.self) })
+            .compactMap({ $0.attributeName.as(IdentifierTypeSyntax.self) })
+            .map(\.name.text)
+    }
+    
+    /// Update attributes list by removing and adding.
+    ///
+    /// - Parameter removing: Attribute names to be removed.
+    /// - Parameter adding: Attribute names to be added.
+    mutating func updateAttributes(removing: Set<String>, adding: Set<String>) {
+        for index in attributes.indices.reversed() {
+            guard let attribute = attributes[index].as(AttributeSyntax.self) else { continue }
+            guard let name = attribute.attributeName.as(IdentifierTypeSyntax.self)?.name else { continue }
+            guard removing.contains(name.text) else { continue }
+            attributes.remove(at: index)
+        }
+        for name in adding {
+            let attribute = AttributeSyntax(
+                attributeName: IdentifierTypeSyntax(name: .identifier(name)),
+                trailingTrivia: .space
+            )
+            attributes.append(AttributeListSyntax.Element(attribute))
+        }
+    }
+}
+
 extension MemberBlockItemListSyntax {
     
     /// Filters for declarations that are stored properties.
