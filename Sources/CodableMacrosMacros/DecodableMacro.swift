@@ -15,8 +15,8 @@ extension DecodableMacro: MemberMacro {
       conformingTo protocols: [TypeSyntax],
       in context: some MacroExpansionContext
     ) throws -> [DeclSyntax] {
-        guard declaration.is(StructDeclSyntax.self) else {
-            context.diagnose(Diagnostic(node: node, message: Message.onlySupportStruct))
+        guard declaration.is(StructDeclSyntax.self) || declaration.is(ClassDeclSyntax.self) else {
+            context.diagnose(Diagnostic(node: node, message: Message.mustBeStructOrClass))
             return []
         }
         return []
@@ -34,7 +34,16 @@ extension DecodableMacro: ExtensionMacro {
         conformingTo protocols: [TypeSyntax],
         in context: some MacroExpansionContext
     ) throws -> [ExtensionDeclSyntax] {
-        guard let declaration = declaration.as(StructDeclSyntax.self) else { return [] }
+        let declarationName: String
+        
+        switch declaration {
+        case let decl as StructDeclSyntax:
+            declarationName = decl.name.text
+        case let decl as ClassDeclSyntax:
+            declarationName = decl.name.text
+        default:
+            return []
+        }
         
         let mappedAccessModifiers = declaration.modifiers.compactMap { modifier -> DeclModifierSyntax? in
             switch modifier.name.text {
@@ -108,7 +117,7 @@ extension DecodableMacro: ExtensionMacro {
         )
         
         let extensionDecl = ExtensionDeclSyntax(
-            extendedType: IdentifierTypeSyntax(name: .identifier(declaration.name.text)),
+            extendedType: IdentifierTypeSyntax(name: .identifier(declarationName)),
             inheritanceClause: extensionInheritanceClause,
             memberBlock: MemberBlockSyntax(
                 members: MemberBlockItemListSyntax {
@@ -128,7 +137,7 @@ extension DecodableMacro {
     
     enum Message: String, DiagnosticMessage {
         
-        case onlySupportStruct
+        case mustBeStructOrClass
         
         var diagnosticID: MessageID {
             MessageID(domain: "CodableMacros", id: rawValue)
@@ -136,13 +145,13 @@ extension DecodableMacro {
     
         var severity: DiagnosticSeverity {
             switch self {
-            case .onlySupportStruct: .error
+            case .mustBeStructOrClass: .error
             }
         }
         
         var message: String {
             switch self {
-            case .onlySupportStruct: "@Decodable only supports struct at this time"
+            case .mustBeStructOrClass: "@Decodable only supports struct or class at this time"
             }
         }
     }
