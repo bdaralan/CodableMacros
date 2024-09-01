@@ -60,7 +60,7 @@ extension DecodableMacro: ExtensionMacro {
             }
         }
         
-        let storedProperties = declaration.memberBlock.members.filterDecodableStoredProperties()
+        let storedProperties = declaration.memberBlock.members.filterStoredProperties()
         
         let enumCodingKeys = EnumDeclSyntax(
             modifiers: accessModifiers,
@@ -159,8 +159,8 @@ extension DecodableMacro {
 
 extension MemberBlockItemListSyntax {
     
-    /// Filters for declarations that are stored properties which will be decoded.
-    func filterDecodableStoredProperties() -> [VariableDeclSyntax] {
+    /// Filters for declarations that are stored properties.
+    func filterStoredProperties() -> [VariableDeclSyntax] {
         compactMap { member -> VariableDeclSyntax? in
             guard let variable = member.decl.as(VariableDeclSyntax.self) else { return nil }
             guard let binding = variable.bindings.first else { return nil }
