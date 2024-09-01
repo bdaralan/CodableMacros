@@ -50,7 +50,7 @@ extension VariableDeclSyntax {
     
     /// Returns a given string inside the `@CodingKey` attribute.
     ///
-    /// Returns `nil` when the declaration does not have this attribute.
+    /// - Returns: `nil` when the declaration does not have this attribute.
     func parseAttributeCodingKeyRawValue() -> String? {
         for attribute in attributes {
             guard let attribute = attribute.as(AttributeSyntax.self) else { continue }
@@ -66,6 +66,8 @@ extension VariableDeclSyntax {
     }
     
     /// Parse the variable declaration for parameters used in `Decodable` constructor.
+    ///
+    /// - Returns: `nil` if not a stored property.
     func parseDecodableParameters() -> (name: String, type: String, initializer: InitializerClauseSyntax?)? {
         guard let binding = bindings.first else { return nil }
         guard binding.accessorBlock == nil else { return nil }

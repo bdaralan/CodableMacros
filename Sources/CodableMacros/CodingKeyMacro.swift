@@ -1,4 +1,4 @@
-/// A macro that provide custom key for `CodingKeys` enum.
+/// A macro that provides custom key for `CodingKeys` enum.
 ///
 /// Use this macro when working with ``CodableMacros/Decodable()``, ``CodableMacros/Encodable()``, or ``CodableMacros/Codable()`` macro to provide custom key.
 ///

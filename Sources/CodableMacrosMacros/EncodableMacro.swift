@@ -102,7 +102,7 @@ extension EncodableMacro: ExtensionMacro {
     }
 }
 
-// MARK: - Helpers
+// MARK: - Helper Methods
 
 extension EncodableMacro {
     
