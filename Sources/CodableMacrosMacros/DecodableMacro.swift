@@ -3,7 +3,29 @@ import SwiftSyntaxBuilder
 import SwiftSyntaxMacros
 import SwiftDiagnostics
 
-public enum DecodableMacro {}
+public enum DecodableMacro {
+    
+    enum Message: String, DiagnosticMessage {
+        
+        case unsupportedType
+        
+        var diagnosticID: MessageID {
+            MessageID(domain: "CodableMacros", id: rawValue)
+        }
+    
+        var severity: DiagnosticSeverity {
+            switch self {
+            case .unsupportedType: .error
+            }
+        }
+        
+        var message: String {
+            switch self {
+            case .unsupportedType: "@Decodable only supports struct or class at this time"
+            }
+        }
+    }
+}
 
 // MARK: - MemberMacro
 
@@ -24,9 +46,12 @@ extension DecodableMacro: MemberMacro {
         // then expands everything else in the extension
         if declaration.is(ClassDeclSyntax.self) {
             var modifiers = parseAccessModifiers(declaration.modifiers)
-            if !declaration.modifiers.contains(where: { $0.name.text == "final" }) {
+            
+            // the decodable init needs required keyword when class doesn't have final keyword
+            if !declaration.modifiers.lazy.map(\.name.text).contains("final") {
                 modifiers.append(DeclModifierSyntax(name: .keyword(.required)))
             }
+            
             let properties = declaration.memberBlock.members.filterStoredProperties()
             let decodableConstructor = makeDecodableConstructor(modifiers: modifiers, properties: properties)
             return [DeclSyntax(decodableConstructor)]
@@ -52,7 +77,9 @@ extension DecodableMacro: ExtensionMacro {
         let name = parseDeclarationName(declaration)
         let modifiers = parseAccessModifiers(declaration.modifiers)
         let properties = declaration.memberBlock.members.filterStoredProperties()
+        
         let enumCodingKeys = makeCodingKeys(modifiers: modifiers, properties: properties)
+        
         let extensionInheritanceClause = InheritanceClauseSyntax(
             inheritedTypes: InheritedTypeListSyntax {
                 InheritedTypeSyntax(type: IdentifierTypeSyntax(name: "Decodable"))
@@ -150,39 +177,17 @@ extension DecodableMacro {
             body: CodeBlockSyntax(
                 statements: CodeBlockItemListSyntax {
                     "let container = try decoder.container(keyedBy: CodingKeys.self)"
-                    for property in properties.compactMap({ $0.parseNameType() }) {
-                        let name = property.name
-                        let type = property.type
-                        "\(raw: name) = try container.decode(\(raw: type).self, forKey: .\(raw: name))"
+                    for parameters in properties.compactMap({ $0.parseDecodableParameters() }) {
+                        let name = parameters.name
+                        let type = parameters.type
+                        if let value = parameters.initializer?.value.description {
+                            "\(raw: name) = try container.decodeIfPresent(\(raw: type).self, forKey: .\(raw: name)) ?? \(raw: value)"
+                        } else {
+                            "\(raw: name) = try container.decode(\(raw: type).self, forKey: .\(raw: name))"
+                        }
                     }
                 }
             )
         )
-    }
-}
-
-// MARK: - Components
-
-extension DecodableMacro {
-    
-    enum Message: String, DiagnosticMessage {
-        
-        case unsupportedType
-        
-        var diagnosticID: MessageID {
-            MessageID(domain: "CodableMacros", id: rawValue)
-        }
-    
-        var severity: DiagnosticSeverity {
-            switch self {
-            case .unsupportedType: .error
-            }
-        }
-        
-        var message: String {
-            switch self {
-            case .unsupportedType: "@Decodable only supports struct or class at this time"
-            }
-        }
     }
 }

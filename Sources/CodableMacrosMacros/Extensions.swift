@@ -34,13 +34,14 @@ extension VariableDeclSyntax {
         return nil
     }
     
-    func parseNameType() -> (name: String, type: String)? {
+    /// Parse the variable declaration for parameters used in `Decodable` constructor.
+    func parseDecodableParameters() -> (name: String, type: String, initializer: InitializerClauseSyntax?)? {
         guard let binding = bindings.first else { return nil }
         guard binding.accessorBlock == nil else { return nil }
         guard let pattern = binding.pattern.as(IdentifierPatternSyntax.self) else { return nil }
         guard let typeAnnotation = binding.typeAnnotation else { return nil }
         guard let type = typeAnnotation.type.as(IdentifierTypeSyntax.self) else { return nil }
-        return (pattern.identifier.text, type.name.text)
+        return (pattern.identifier.text, type.name.text, binding.initializer)
     }
 }
 
