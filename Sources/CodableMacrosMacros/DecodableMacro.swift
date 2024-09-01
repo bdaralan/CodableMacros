@@ -97,9 +97,7 @@ extension DecodableMacro: ExtensionMacro {
         let extensionDecl = ExtensionDeclSyntax(
             extendedType: IdentifierTypeSyntax(name: .identifier(name)),
             inheritanceClause: extensionInheritanceClause,
-            memberBlock: MemberBlockSyntax(
-                members: extensionMembers
-            )
+            memberBlock: MemberBlockSyntax(members: extensionMembers)
         )
         
         return [extensionDecl]

@@ -1,6 +1,6 @@
 import CodableMacros
 
-@Decodable public struct User {
+@Decodable struct DecodableUser {
     
     let id: String
     
@@ -8,27 +8,27 @@ import CodableMacros
     var username: String
 }
 
-@Decodable public class UserReference {
+@Decodable class DecodableUserReference {
     
     @CodingKey("user_data")
-    var user: User
+    var user: DecodableUser
     
-    init(user: User) {
+    init(user: DecodableUser) {
         self.user = user
     }
 }
 
-@Decodable public final class UserFinalReference {
+@Decodable final class DecodableUserFinalReference {
     
     @CodingKey("user_data")
-    var user: User
+    var user: DecodableUser
     
-    init(user: User) {
+    init(user: DecodableUser) {
         self.user = user
     }
 }
 
-@Decodable public struct Values {
+@Decodable struct DecodableValues {
     var string1: String = "str1"
     var string2: String = String("str2")
     var string3: String = String(3)
@@ -50,7 +50,7 @@ import CodableMacros
     var boolean5: Bool = .random()
 }
 
-@Decodable public class ValuesReference {
+@Decodable class DecodableValuesReference {
     var string1: String = "str1"
     var string2: String = String("str2")
     var string3: String = String(3)
@@ -70,4 +70,12 @@ import CodableMacros
     var boolean3: Bool = Bool(true)
     var boolean4: Bool = Bool(false)
     var boolean5: Bool = .random()
+}
+
+@Encodable struct EncodableUser {
+    
+    let id: String
+    
+    @CodingKey("user_name")
+    var username: String
 }

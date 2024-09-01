@@ -10,6 +10,7 @@ import CodableMacrosMacros
 
 let testMacros: [String: Macro.Type] = [
     "Decodable": DecodableMacro.self,
+    "Encodable": EncodableMacro.self,
     "CodingKey": CodingKeyMacro.self
 ]
 #endif
@@ -370,6 +371,45 @@ final class CodableMacrosTests: XCTestCase {
                 case boolean3
                 case boolean4
                 case boolean5
+            }
+        }
+        """
+        assertMacroExpansion(declaration, expandedSource: expansion, macros: testMacros)
+        #else
+        throw XCTSkip("macros are only supported when running tests for the host platform")
+        #endif
+    }
+    
+    func test_Encodable_macro_on_struct() throws {
+        #if canImport(CodableMacrosMacros)
+        let declaration =  """
+        @Encodable
+        public struct User {
+        
+            let id: String
+        
+            var username: String
+        }
+        """
+        let expansion = """
+        public struct User {
+
+            let id: String
+        
+            var username: String
+        }
+        
+        extension User: Encodable {
+        
+            public enum CodingKeys: String, CodingKey {
+                case id
+                case username
+            }
+        
+            public func encode(to encoder: any Encoder) throws {
+                var container = encoder.container(keyedBy: CodingKeys.self)
+                try container.encode(id, forKey: .id)
+                try container.encode(username, forKey: .username)
             }
         }
         """
