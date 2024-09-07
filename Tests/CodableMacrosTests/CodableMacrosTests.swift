@@ -641,6 +641,31 @@ final class CodableMacrosTests: XCTestCase {
         #endif
     }
     
+    func test_Codable_macro_on_struct_no_properties() throws {
+        #if canImport(CodableMacrosMacros)
+        let declaration =  """
+        @Codable
+        public struct User {
+        
+        }
+        """
+        let expansion = """
+        public struct User {
+        
+        }
+        
+        extension User: Decodable, Encodable {
+        
+            public func encode(to encoder: any Encoder) throws {
+            }
+        }
+        """
+        assertMacroExpansion(declaration, expandedSource: expansion, macros: testMacros)
+        #else
+        throw XCTSkip("macros are only supported when running tests for the host platform")
+        #endif
+    }
+    
     func test_Codable_macro_on_struct() throws {
         #if canImport(CodableMacrosMacros)
         let declaration =  """
@@ -677,6 +702,66 @@ final class CodableMacrosTests: XCTestCase {
                 var container = encoder.container(keyedBy: CodingKeys.self)
                 try container.encode(id, forKey: .id)
                 try container.encode(username, forKey: .username)
+            }
+        }
+        """
+        assertMacroExpansion(declaration, expandedSource: expansion, macros: testMacros)
+        #else
+        throw XCTSkip("macros are only supported when running tests for the host platform")
+        #endif
+    }
+    
+    func test_Codable_macro_on_class_no_properties() throws {
+        #if canImport(CodableMacrosMacros)
+        let declaration =  """
+        @Codable
+        public class User {
+        
+            public init() {}
+        }
+        """
+        let expansion = """
+        public class User {
+
+            public init() {}
+        
+            public required init(from decoder: any Decoder) throws {
+            }
+        }
+        
+        extension User: Decodable, Encodable {
+        
+            public func encode(to encoder: any Encoder) throws {
+            }
+        }
+        """
+        assertMacroExpansion(declaration, expandedSource: expansion, macros: testMacros)
+        #else
+        throw XCTSkip("macros are only supported when running tests for the host platform")
+        #endif
+    }
+    
+    func test_Codable_macro_on_final_class_no_properties() throws {
+        #if canImport(CodableMacrosMacros)
+        let declaration =  """
+        @Codable
+        public final class User {
+        
+            public init() {}
+        }
+        """
+        let expansion = """
+        public final class User {
+
+            public init() {}
+        
+            public init(from decoder: any Decoder) throws {
+            }
+        }
+        
+        extension User: Decodable, Encodable {
+        
+            public func encode(to encoder: any Encoder) throws {
             }
         }
         """

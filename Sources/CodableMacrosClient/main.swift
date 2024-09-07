@@ -123,6 +123,18 @@ import CodableMacros
 
 // MARK: - Codable
 
+@Codable struct CodableUserNoProperties {
+    
+}
+
+@Codable class CodableUserClassNoProperties {
+
+}
+
+@Codable final class CodableUserFinalClassNoProperties {
+
+}
+
 @Codable struct CodableUser {
     
     let id: String

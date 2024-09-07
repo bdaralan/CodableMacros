@@ -85,13 +85,17 @@ extension CodableMacro: ExtensionMacro {
         )
         
         let extensionMembers = MemberBlockItemListSyntax {
-            MemberBlockItemSyntax(leadingTrivia: .newlines(2), decl: enumCodingKeys)
-            if declaration.is(StructDeclSyntax.self) {
+            if !properties.isEmpty {
+                MemberBlockItemSyntax(leadingTrivia: .newlines(2), decl: enumCodingKeys)
+            }
+            if declaration.is(StructDeclSyntax.self) && !properties.isEmpty {
                 let decodableConstructor = DecodableMacro.makeDecodableConstructor(modifiers: modifiers, properties: properties)
                 MemberBlockItemSyntax(leadingTrivia: .newlines(2), decl: decodableConstructor)
             }
-            let encodableMethod = EncodableMacro.makeEncodableEncodeMethod(modifiers: modifiers, properties: properties)
-            MemberBlockItemSyntax(leadingTrivia: .newlines(2), decl: encodableMethod)
+            MemberBlockItemSyntax(
+                leadingTrivia: .newlines(2),
+                decl: EncodableMacro.makeEncodableEncodeMethod(modifiers: modifiers, properties: properties)
+            )
         }
         
         let extensionDecl = ExtensionDeclSyntax(
