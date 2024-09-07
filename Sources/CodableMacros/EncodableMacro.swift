@@ -13,6 +13,6 @@
 /// }
 /// ```
 ///
-@attached(member)
+@attached(member, names: named(encode(to:)))
 @attached(extension, conformances: Encodable, names: named(CodingKeys), named(encode(to:)))
 public macro Encodable() = #externalMacro(module: "CodableMacrosMacros", type: "EncodableMacro")

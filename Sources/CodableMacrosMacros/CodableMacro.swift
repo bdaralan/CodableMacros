@@ -9,6 +9,8 @@ public enum CodableMacro {
         
         case unsupportedType
         
+        case unexpected
+        
         var diagnosticID: MessageID {
             MessageID(domain: "CodableMacros", id: rawValue)
         }
@@ -16,12 +18,14 @@ public enum CodableMacro {
         var severity: DiagnosticSeverity {
             switch self {
             case .unsupportedType: .error
+            case .unexpected: .error
             }
         }
         
         var message: String {
             switch self {
             case .unsupportedType: "@Codable only supports struct or class at this time"
+            case .unexpected: "Encounter unexpected use case"
             }
         }
     }
@@ -37,25 +41,38 @@ extension CodableMacro: MemberMacro {
         conformingTo protocols: [TypeSyntax],
         in context: some MacroExpansionContext
     ) throws -> [DeclSyntax] {
+        let supported = declaration.is(StructDeclSyntax.self) || declaration.is(ClassDeclSyntax.self)
+        
+        guard supported else {
+            // show unsupported declaration diagnostic message
+            context.diagnose(Diagnostic(node: node, message: Message.unsupportedType))
+            return []
+        }
+        
         if declaration.is(StructDeclSyntax.self) {
             return []
         }
         
+        // for class the macro expands init(from:) and encode(to:) in the declaration
         if declaration.is(ClassDeclSyntax.self) {
-            var modifiers = DecodableMacro.parseAccessModifiers(declaration.modifiers)
+            let modifiers = DecodableMacro.parseAccessModifiers(declaration.modifiers)
+            let properties = declaration.memberBlock.members.filterStoredProperties()
             
-            // the decodable init needs required keyword when class doesn't have final keyword
+            var decodableConstructor = DecodableMacro.makeDecodableConstructor(modifiers: modifiers, properties: properties)
+            
+            // non-final class needs to add required key to satisfy the decodable conformance
             if !declaration.modifiers.lazy.map(\.name.text).contains("final") {
-                modifiers.append(DeclModifierSyntax(name: .keyword(.required)))
+                let requiredKeyword = DeclModifierSyntax(name: .keyword(.required))
+                decodableConstructor.modifiers.append(requiredKeyword)
             }
             
-            let properties = declaration.memberBlock.members.filterStoredProperties()
-            let decodableConstructor = DecodableMacro.makeDecodableConstructor(modifiers: modifiers, properties: properties)
-            return [DeclSyntax(decodableConstructor)]
+            let encodableEncodeMethod = EncodableMacro.makeEncodableEncodeMethod(modifiers: modifiers, properties: properties)
+            
+            return [DeclSyntax(decodableConstructor), DeclSyntax(encodableEncodeMethod)]
         }
         
-        // show unsupported declaration diagnostic message
-        context.diagnose(Diagnostic(node: node, message: Message.unsupportedType))
+        // show unexpected use-case message
+        context.diagnose(Diagnostic(node: node, message: Message.unexpected))
         return []
     }
 }
@@ -91,7 +108,7 @@ extension CodableMacro: ExtensionMacro {
                 let decodableConstructor = DecodableMacro.makeDecodableConstructor(modifiers: modifiers, properties: properties)
                 MemberBlockItemSyntax(leadingTrivia: .newlines(2), decl: decodableConstructor)
             }
-            if declaration.is(ClassDeclSyntax.self) || !properties.isEmpty {
+            if declaration.is(StructDeclSyntax.self) && !properties.isEmpty {
                 MemberBlockItemSyntax(
                     leadingTrivia: .newlines(2),
                     decl: EncodableMacro.makeEncodableEncodeMethod(modifiers: modifiers, properties: properties)

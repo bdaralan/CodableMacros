@@ -11,6 +11,8 @@ public enum DecodableMacro {
         
         case unsupportedMacrosCombination
         
+        case unexpected
+        
         var diagnosticID: MessageID {
             MessageID(domain: "CodableMacros", id: rawValue)
         }
@@ -19,6 +21,7 @@ public enum DecodableMacro {
             switch self {
             case .unsupportedType: .error
             case .unsupportedMacrosCombination: .error
+            case .unexpected: .error
             }
         }
         
@@ -26,6 +29,7 @@ public enum DecodableMacro {
             switch self {
             case .unsupportedType: "@Decodable only supports struct or class at this time"
             case .unsupportedMacrosCombination: "@Decodable and @Encodable cannot be applied together"
+            case .unexpected: "Encounter unexpected use case"
             }
         }
     }
@@ -58,6 +62,14 @@ extension DecodableMacro: MemberMacro {
         conformingTo protocols: [TypeSyntax],
         in context: some MacroExpansionContext
     ) throws -> [DeclSyntax] {
+        let supported = declaration.is(StructDeclSyntax.self) || declaration.is(ClassDeclSyntax.self)
+        
+        guard supported else {
+            // show unsupported declaration diagnostic message
+            context.diagnose(Diagnostic(node: node, message: Message.unsupportedType))
+            return []
+        }
+        
         let attributeNames = declaration.parseAttributeNames()
         
         // cannot use Decodable and Encodable together
@@ -91,8 +103,8 @@ extension DecodableMacro: MemberMacro {
             return [DeclSyntax(decodableConstructor)]
         }
         
-        // show unsupported declaration diagnostic message
-        context.diagnose(Diagnostic(node: node, message: Message.unsupportedType))
+        // show unexpected use-case message
+        context.diagnose(Diagnostic(node: node, message: Message.unexpected))
         return []
     }
 }

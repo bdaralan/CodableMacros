@@ -488,18 +488,20 @@ final class CodableMacrosTests: XCTestCase {
         let declaration =  """
         @Encodable
         public class User {
-        
+
+            public init() {}
         }
         """
         let expansion = """
         public class User {
-        
-        }
-        
-        extension User: Encodable {
+
+            public init() {}
         
             public func encode(to encoder: any Encoder) throws {
             }
+        }
+        
+        extension User: Encodable {
         }
         """
         assertMacroExpansion(declaration, expandedSource: expansion, macros: testMacros)
@@ -513,18 +515,20 @@ final class CodableMacrosTests: XCTestCase {
         let declaration =  """
         @Encodable
         public final class User {
-        
+
+            public init() {}
         }
         """
         let expansion = """
         public final class User {
-        
-        }
-        
-        extension User: Encodable {
+
+            public init() {}
         
             public func encode(to encoder: any Encoder) throws {
             }
+        }
+        
+        extension User: Encodable {
         }
         """
         assertMacroExpansion(declaration, expandedSource: expansion, macros: testMacros)
@@ -550,6 +554,12 @@ final class CodableMacrosTests: XCTestCase {
             let id: String
         
             var username: String
+        
+            public func encode(to encoder: any Encoder) throws {
+                var container = encoder.container(keyedBy: CodingKeys.self)
+                try container.encode(id, forKey: .id)
+                try container.encode(username, forKey: .username)
+            }
         }
 
         extension User: Encodable {
@@ -557,12 +567,6 @@ final class CodableMacrosTests: XCTestCase {
             public enum CodingKeys: String, CodingKey {
                 case id
                 case username
-            }
-        
-            public func encode(to encoder: any Encoder) throws {
-                var container = encoder.container(keyedBy: CodingKeys.self)
-                try container.encode(id, forKey: .id)
-                try container.encode(username, forKey: .username)
             }
         }
         """
@@ -657,12 +661,12 @@ final class CodableMacrosTests: XCTestCase {
         
             public required init(from decoder: any Decoder) throws {
             }
+
+            public func encode(to encoder: any Encoder) throws {
+            }
         }
         
         extension User: Codable {
-        
-            public func encode(to encoder: any Encoder) throws {
-            }
         }
         """
         assertMacroExpansion(declaration, expandedSource: expansion, macros: testMacros)
@@ -676,7 +680,7 @@ final class CodableMacrosTests: XCTestCase {
         let declaration =  """
         @Codable
         public final class User {
-        
+
             public init() {}
         }
         """
@@ -684,15 +688,15 @@ final class CodableMacrosTests: XCTestCase {
         public final class User {
 
             public init() {}
-        
+
             public init(from decoder: any Decoder) throws {
             }
-        }
-        
-        extension User: Codable {
-        
+
             public func encode(to encoder: any Encoder) throws {
             }
+        }
+
+        extension User: Codable {
         }
         """
         assertMacroExpansion(declaration, expandedSource: expansion, macros: testMacros)
@@ -724,6 +728,12 @@ final class CodableMacrosTests: XCTestCase {
                 id = try container.decode(String.self, forKey: .id)
                 username = try container.decode(String.self, forKey: .username)
             }
+
+            public func encode(to encoder: any Encoder) throws {
+                var container = encoder.container(keyedBy: CodingKeys.self)
+                try container.encode(id, forKey: .id)
+                try container.encode(username, forKey: .username)
+            }
         }
         
         extension User: Codable {
@@ -731,12 +741,6 @@ final class CodableMacrosTests: XCTestCase {
             public enum CodingKeys: String, CodingKey {
                 case id
                 case username
-            }
-        
-            public func encode(to encoder: any Encoder) throws {
-                var container = encoder.container(keyedBy: CodingKeys.self)
-                try container.encode(id, forKey: .id)
-                try container.encode(username, forKey: .username)
             }
         }
         """
@@ -769,6 +773,12 @@ final class CodableMacrosTests: XCTestCase {
                 id = try container.decode(String.self, forKey: .id)
                 username = try container.decode(String.self, forKey: .username)
             }
+
+            public func encode(to encoder: any Encoder) throws {
+                var container = encoder.container(keyedBy: CodingKeys.self)
+                try container.encode(id, forKey: .id)
+                try container.encode(username, forKey: .username)
+            }
         }
         
         extension User: Codable {
@@ -776,12 +786,6 @@ final class CodableMacrosTests: XCTestCase {
             public enum CodingKeys: String, CodingKey {
                 case id
                 case username
-            }
-        
-            public func encode(to encoder: any Encoder) throws {
-                var container = encoder.container(keyedBy: CodingKeys.self)
-                try container.encode(id, forKey: .id)
-                try container.encode(username, forKey: .username)
             }
         }
         """
@@ -866,6 +870,46 @@ final class CodableMacrosTests: XCTestCase {
         #if canImport(CodableMacrosMacros)
         let declaration =  """
         @Encodable
+        public class User {
+        
+            let id: String
+            
+            @CodingKey("user_name")
+            var username: String
+        }
+        """
+        let expansion = """
+        public class User {
+
+            let id: String
+            
+            var username: String
+
+            public func encode(to encoder: any Encoder) throws {
+                var container = encoder.container(keyedBy: CodingKeys.self)
+                try container.encode(id, forKey: .id)
+                try container.encode(username, forKey: .username)
+            }
+        }
+
+        extension User: Encodable {
+
+            public enum CodingKeys: String, CodingKey {
+                case id
+                case username = "user_name"
+            }
+        }
+        """
+        assertMacroExpansion(declaration, expandedSource: expansion, macros: testMacros)
+        #else
+        throw XCTSkip("macros are only supported when running tests for the host platform")
+        #endif
+    }
+    
+    func test_CodingKey_macro_on_final_class() throws {
+        #if canImport(CodableMacrosMacros)
+        let declaration =  """
+        @Encodable
         public final class User {
         
             let id: String
@@ -880,6 +924,12 @@ final class CodableMacrosTests: XCTestCase {
             let id: String
             
             var username: String
+
+            public func encode(to encoder: any Encoder) throws {
+                var container = encoder.container(keyedBy: CodingKeys.self)
+                try container.encode(id, forKey: .id)
+                try container.encode(username, forKey: .username)
+            }
         }
 
         extension User: Encodable {
@@ -887,12 +937,6 @@ final class CodableMacrosTests: XCTestCase {
             public enum CodingKeys: String, CodingKey {
                 case id
                 case username = "user_name"
-            }
-
-            public func encode(to encoder: any Encoder) throws {
-                var container = encoder.container(keyedBy: CodingKeys.self)
-                try container.encode(id, forKey: .id)
-                try container.encode(username, forKey: .username)
             }
         }
         """

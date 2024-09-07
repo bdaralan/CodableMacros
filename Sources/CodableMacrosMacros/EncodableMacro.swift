@@ -9,6 +9,8 @@ public enum EncodableMacro {
         
         case unsupportedType
         
+        case unexpected
+        
         var diagnosticID: MessageID {
             MessageID(domain: "CodableMacros", id: rawValue)
         }
@@ -16,12 +18,14 @@ public enum EncodableMacro {
         var severity: DiagnosticSeverity {
             switch self {
             case .unsupportedType: .error
+            case .unexpected: .error
             }
         }
         
         var message: String {
             switch self {
             case .unsupportedType: "@Encodable only supports struct or class at this time"
+            case .unexpected: "Encounter unexpected use case"
             }
         }
     }
@@ -37,6 +41,14 @@ extension EncodableMacro: MemberMacro {
         conformingTo protocols: [TypeSyntax],
         in context: some MacroExpansionContext
     ) throws -> [DeclSyntax] {
+        let supported = declaration.is(StructDeclSyntax.self) || declaration.is(ClassDeclSyntax.self)
+        
+        guard supported else {
+            // show unsupported declaration diagnostic message
+            context.diagnose(Diagnostic(node: node, message: Message.unsupportedType))
+            return []
+        }
+        
         let attributeNames = declaration.parseAttributeNames()
         
         // cannot use Decodable and Encodable together
@@ -45,13 +57,21 @@ extension EncodableMacro: MemberMacro {
             return []
         }
         
-        // for struct and class the macro expands everything in the extension
-        if declaration.is(StructDeclSyntax.self) || declaration.is(ClassDeclSyntax.self) {
+        // for struct the macro expands everything in the extension
+        if declaration.is(StructDeclSyntax.self) {
             return []
         }
         
-        // show unsupported declaration diagnostic message
-        context.diagnose(Diagnostic(node: node, message: Message.unsupportedType))
+        // for class expands encode(to:) here
+        if declaration.is(ClassDeclSyntax.self) {
+            let modifiers = DecodableMacro.parseAccessModifiers(declaration.modifiers)
+            let properties = declaration.memberBlock.members.filterStoredProperties()
+            let encodeMethod = makeEncodableEncodeMethod(modifiers: modifiers, properties: properties)
+            return [DeclSyntax(encodeMethod)]
+        }
+        
+        // show unexpected use-case message
+        context.diagnose(Diagnostic(node: node, message: Message.unexpected))
         return []
     }
 }
@@ -91,7 +111,7 @@ extension EncodableMacro: ExtensionMacro {
             if !properties.isEmpty {
                 MemberBlockItemSyntax(leadingTrivia: .newlines(2), decl: enumCodingKeys)
             }
-            if declaration.is(ClassDeclSyntax.self) || !properties.isEmpty {
+            if declaration.is(StructDeclSyntax.self) && !properties.isEmpty {
                 MemberBlockItemSyntax(leadingTrivia: .newlines(2), decl: encodeMethod)
             }
         }
@@ -112,7 +132,6 @@ extension EncodableMacro {
     
     static func makeEncodableEncodeMethod(modifiers: DeclModifierListSyntax, properties: [VariableDeclSyntax]) -> FunctionDeclSyntax {
         FunctionDeclSyntax(
-            attributes: AttributeListSyntax(),
             modifiers: modifiers,
             funcKeyword: .keyword(.func),
             name: TokenSyntax("encode"),
