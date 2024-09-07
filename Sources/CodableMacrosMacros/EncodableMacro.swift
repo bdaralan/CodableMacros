@@ -90,6 +90,8 @@ extension EncodableMacro: ExtensionMacro {
         let extensionMembers = MemberBlockItemListSyntax {
             if !properties.isEmpty {
                 MemberBlockItemSyntax(leadingTrivia: .newlines(2), decl: enumCodingKeys)
+            }
+            if declaration.is(ClassDeclSyntax.self) || !properties.isEmpty {
                 MemberBlockItemSyntax(leadingTrivia: .newlines(2), decl: encodeMethod)
             }
         }

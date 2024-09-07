@@ -572,6 +572,9 @@ final class CodableMacrosTests: XCTestCase {
         }
         
         extension User: Encodable {
+        
+            public func encode(to encoder: any Encoder) throws {
+            }
         }
         """
         assertMacroExpansion(declaration, expandedSource: expansion, macros: testMacros)
@@ -594,6 +597,9 @@ final class CodableMacrosTests: XCTestCase {
         }
         
         extension User: Encodable {
+        
+            public func encode(to encoder: any Encoder) throws {
+            }
         }
         """
         assertMacroExpansion(declaration, expandedSource: expansion, macros: testMacros)
@@ -655,9 +661,6 @@ final class CodableMacrosTests: XCTestCase {
         }
         
         extension User: Codable {
-        
-            public func encode(to encoder: any Encoder) throws {
-            }
         }
         """
         assertMacroExpansion(declaration, expandedSource: expansion, macros: testMacros)

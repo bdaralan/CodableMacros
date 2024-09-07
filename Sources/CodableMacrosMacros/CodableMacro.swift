@@ -91,10 +91,12 @@ extension CodableMacro: ExtensionMacro {
                 let decodableConstructor = DecodableMacro.makeDecodableConstructor(modifiers: modifiers, properties: properties)
                 MemberBlockItemSyntax(leadingTrivia: .newlines(2), decl: decodableConstructor)
             }
-            MemberBlockItemSyntax(
-                leadingTrivia: .newlines(2),
-                decl: EncodableMacro.makeEncodableEncodeMethod(modifiers: modifiers, properties: properties)
-            )
+            if declaration.is(ClassDeclSyntax.self) || !properties.isEmpty {
+                MemberBlockItemSyntax(
+                    leadingTrivia: .newlines(2),
+                    decl: EncodableMacro.makeEncodableEncodeMethod(modifiers: modifiers, properties: properties)
+                )
+            }
         }
         
         let extensionDecl = ExtensionDeclSyntax(
