@@ -1,5 +1,7 @@
 import CodableMacros
 
+// MARK: - Decodable
+
 @Decodable struct DecodableUserNoProperties {
     
 }
@@ -84,6 +86,20 @@ import CodableMacros
     var boolean5: Bool = .random()
 }
 
+// MARK: - Encodable
+
+@Encodable struct EncodableUserNoProperties {
+    
+}
+
+@Encodable class EncodableUserClassNoProperties {
+    
+}
+
+@Encodable final class EncodableUserFinalClassNoProperties {
+    
+}
+
 @Encodable struct EncodableUser {
     
     let id: String
@@ -104,6 +120,8 @@ import CodableMacros
         self.username = username
     }
 }
+
+// MARK: - Codable
 
 @Codable struct CodableUser {
     

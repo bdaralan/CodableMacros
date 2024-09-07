@@ -88,8 +88,10 @@ extension EncodableMacro: ExtensionMacro {
         )
         
         let extensionMembers = MemberBlockItemListSyntax {
-            MemberBlockItemSyntax(leadingTrivia: .newlines(2), decl: enumCodingKeys)
-            MemberBlockItemSyntax(leadingTrivia: .newlines(2), decl: encodeMethod)
+            if !properties.isEmpty {
+                MemberBlockItemSyntax(leadingTrivia: .newlines(2), decl: enumCodingKeys)
+                MemberBlockItemSyntax(leadingTrivia: .newlines(2), decl: encodeMethod)
+            }
         }
         
         let extensionDecl = ExtensionDeclSyntax(
@@ -129,7 +131,9 @@ extension EncodableMacro {
             ),
             body: CodeBlockSyntax(
                 statements: CodeBlockItemListSyntax {
-                    "var container = encoder.container(keyedBy: CodingKeys.self)"
+                    if !properties.isEmpty {
+                        "var container = encoder.container(keyedBy: CodingKeys.self)"
+                    }
                     for parameters in properties.compactMap({ $0.parseDecodableParameters() }) {
                         let name = parameters.name
                         "try container.encode(\(raw: name), forKey: .\(raw: name))"
