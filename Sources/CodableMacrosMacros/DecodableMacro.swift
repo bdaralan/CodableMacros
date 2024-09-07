@@ -128,8 +128,10 @@ extension DecodableMacro: ExtensionMacro {
         )
         
         let extensionMembers = MemberBlockItemListSyntax {
-            MemberBlockItemSyntax(leadingTrivia: .newlines(2), decl: enumCodingKeys)
-            if declaration.is(StructDeclSyntax.self) {
+            if !properties.isEmpty {
+                MemberBlockItemSyntax(leadingTrivia: .newlines(2), decl: enumCodingKeys)
+            }
+            if declaration.is(StructDeclSyntax.self) && !properties.isEmpty {
                 let decodableConstructor = makeDecodableConstructor(modifiers: modifiers, properties: properties)
                 MemberBlockItemSyntax(leadingTrivia: .newlines(2), decl: decodableConstructor)
             }
@@ -215,7 +217,9 @@ extension DecodableMacro {
             ),
             body: CodeBlockSyntax(
                 statements: CodeBlockItemListSyntax {
-                    "let container = try decoder.container(keyedBy: CodingKeys.self)"
+                    if !properties.isEmpty {
+                        "let container = try decoder.container(keyedBy: CodingKeys.self)"
+                    }
                     for parameters in properties.compactMap({ $0.parseDecodableParameters() }) {
                         let name = parameters.name
                         let type = parameters.type

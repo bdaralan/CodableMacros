@@ -1,5 +1,17 @@
 import CodableMacros
 
+@Decodable struct DecodableUserNoProperties {
+    
+}
+
+@Decodable class DecodableUserClassNoProperties {
+    
+}
+
+@Decodable final class DecodableUserFinalClassNoProperties {
+    
+}
+
 @Decodable struct DecodableUser {
     
     let id: String
