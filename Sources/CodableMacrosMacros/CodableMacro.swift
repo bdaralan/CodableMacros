@@ -79,8 +79,7 @@ extension CodableMacro: ExtensionMacro {
         
         let extensionInheritanceClause = InheritanceClauseSyntax(
             inheritedTypes: InheritedTypeListSyntax {
-                InheritedTypeSyntax(type: IdentifierTypeSyntax(name: "Decodable"))
-                InheritedTypeSyntax(type: IdentifierTypeSyntax(name: "Encodable"))
+                InheritedTypeSyntax(type: IdentifierTypeSyntax(name: "Codable"))
             }
         )
         

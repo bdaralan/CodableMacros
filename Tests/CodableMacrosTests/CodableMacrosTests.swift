@@ -654,7 +654,7 @@ final class CodableMacrosTests: XCTestCase {
         
         }
         
-        extension User: Decodable, Encodable {
+        extension User: Codable {
         
             public func encode(to encoder: any Encoder) throws {
             }
@@ -685,7 +685,7 @@ final class CodableMacrosTests: XCTestCase {
             var username: String
         }
         
-        extension User: Decodable, Encodable {
+        extension User: Codable {
         
             public enum CodingKeys: String, CodingKey {
                 case id
@@ -729,7 +729,7 @@ final class CodableMacrosTests: XCTestCase {
             }
         }
         
-        extension User: Decodable, Encodable {
+        extension User: Codable {
         
             public func encode(to encoder: any Encoder) throws {
             }
@@ -759,7 +759,7 @@ final class CodableMacrosTests: XCTestCase {
             }
         }
         
-        extension User: Decodable, Encodable {
+        extension User: Codable {
         
             public func encode(to encoder: any Encoder) throws {
             }
@@ -796,7 +796,7 @@ final class CodableMacrosTests: XCTestCase {
             }
         }
         
-        extension User: Decodable, Encodable {
+        extension User: Codable {
         
             public enum CodingKeys: String, CodingKey {
                 case id
@@ -841,7 +841,7 @@ final class CodableMacrosTests: XCTestCase {
             }
         }
         
-        extension User: Decodable, Encodable {
+        extension User: Codable {
         
             public enum CodingKeys: String, CodingKey {
                 case id
