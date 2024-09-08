@@ -125,8 +125,8 @@ final class CodableMacrosTests: XCTestCase {
         
             public init(from decoder: any Decoder) throws {
                 let container = try decoder.container(keyedBy: CodingKeys.self)
-                id = try container.decode(String.self, forKey: .id)
-                username = try container.decode(String.self, forKey: .username)
+                self.id = try container.decode(String.self, forKey: .id)
+                self.username = try container.decode(String.self, forKey: .username)
             }
         }
         """
@@ -156,8 +156,8 @@ final class CodableMacrosTests: XCTestCase {
         
             public required init(from decoder: any Decoder) throws {
                 let container = try decoder.container(keyedBy: CodingKeys.self)
-                id = try container.decode(String.self, forKey: .id)
-                username = try container.decode(String.self, forKey: .username)
+                self.id = try container.decode(String.self, forKey: .id)
+                self.username = try container.decode(String.self, forKey: .username)
             }
         }
         
@@ -195,8 +195,8 @@ final class CodableMacrosTests: XCTestCase {
         
             public init(from decoder: any Decoder) throws {
                 let container = try decoder.container(keyedBy: CodingKeys.self)
-                id = try container.decode(String.self, forKey: .id)
-                username = try container.decode(String.self, forKey: .username)
+                self.id = try container.decode(String.self, forKey: .id)
+                self.username = try container.decode(String.self, forKey: .username)
             }
         }
         
@@ -289,25 +289,25 @@ final class CodableMacrosTests: XCTestCase {
 
             public init(from decoder: any Decoder) throws {
                 let container = try decoder.container(keyedBy: CodingKeys.self)
-                string1 = try container.decodeIfPresent(String.self, forKey: .string1) ?? "str1"
-                string2 = try container.decodeIfPresent(String.self, forKey: .string2) ?? String("str2")
-                string3 = try container.decodeIfPresent(String.self, forKey: .string3) ?? String(3)
-                string4 = try container.decodeIfPresent(String.self, forKey: .string4) ?? String(4.0)
-                string5 = try container.decodeIfPresent(String.self, forKey: .string5) ?? .init()
-                integer1 = try container.decodeIfPresent(Int.self, forKey: .integer1) ?? 1
-                integer2 = try container.decodeIfPresent(Int.self, forKey: .integer2) ?? Int(2)
-                integer3 = try container.decodeIfPresent(Int.self, forKey: .integer3) ?? Int(3.0)
-                integer4 = try container.decodeIfPresent(Int.self, forKey: .integer4) ?? .min
-                double1 = try container.decodeIfPresent(Double.self, forKey: .double1) ?? 1
-                double2 = try container.decodeIfPresent(Double.self, forKey: .double2) ?? 2.0
-                double3 = try container.decodeIfPresent(Double.self, forKey: .double3) ?? Double(3)
-                double4 = try container.decodeIfPresent(Double.self, forKey: .double4) ?? Double(4.0)
-                double5 = try container.decodeIfPresent(Double.self, forKey: .double5) ?? .pi
-                boolean1 = try container.decodeIfPresent(Bool.self, forKey: .boolean1) ?? true
-                boolean2 = try container.decodeIfPresent(Bool.self, forKey: .boolean2) ?? false
-                boolean3 = try container.decodeIfPresent(Bool.self, forKey: .boolean3) ?? Bool(true)
-                boolean4 = try container.decodeIfPresent(Bool.self, forKey: .boolean4) ?? Bool(false)
-                boolean5 = try container.decodeIfPresent(Bool.self, forKey: .boolean5) ?? .random()
+                self.string1 = try container.decodeIfPresent(String.self, forKey: .string1) ?? "str1"
+                self.string2 = try container.decodeIfPresent(String.self, forKey: .string2) ?? String("str2")
+                self.string3 = try container.decodeIfPresent(String.self, forKey: .string3) ?? String(3)
+                self.string4 = try container.decodeIfPresent(String.self, forKey: .string4) ?? String(4.0)
+                self.string5 = try container.decodeIfPresent(String.self, forKey: .string5) ?? .init()
+                self.integer1 = try container.decodeIfPresent(Int.self, forKey: .integer1) ?? 1
+                self.integer2 = try container.decodeIfPresent(Int.self, forKey: .integer2) ?? Int(2)
+                self.integer3 = try container.decodeIfPresent(Int.self, forKey: .integer3) ?? Int(3.0)
+                self.integer4 = try container.decodeIfPresent(Int.self, forKey: .integer4) ?? .min
+                self.double1 = try container.decodeIfPresent(Double.self, forKey: .double1) ?? 1
+                self.double2 = try container.decodeIfPresent(Double.self, forKey: .double2) ?? 2.0
+                self.double3 = try container.decodeIfPresent(Double.self, forKey: .double3) ?? Double(3)
+                self.double4 = try container.decodeIfPresent(Double.self, forKey: .double4) ?? Double(4.0)
+                self.double5 = try container.decodeIfPresent(Double.self, forKey: .double5) ?? .pi
+                self.boolean1 = try container.decodeIfPresent(Bool.self, forKey: .boolean1) ?? true
+                self.boolean2 = try container.decodeIfPresent(Bool.self, forKey: .boolean2) ?? false
+                self.boolean3 = try container.decodeIfPresent(Bool.self, forKey: .boolean3) ?? Bool(true)
+                self.boolean4 = try container.decodeIfPresent(Bool.self, forKey: .boolean4) ?? Bool(false)
+                self.boolean5 = try container.decodeIfPresent(Bool.self, forKey: .boolean5) ?? .random()
             }
         }
         """
@@ -367,25 +367,25 @@ final class CodableMacrosTests: XCTestCase {
         
             public required init(from decoder: any Decoder) throws {
                 let container = try decoder.container(keyedBy: CodingKeys.self)
-                string1 = try container.decodeIfPresent(String.self, forKey: .string1) ?? "str1"
-                string2 = try container.decodeIfPresent(String.self, forKey: .string2) ?? String("str2")
-                string3 = try container.decodeIfPresent(String.self, forKey: .string3) ?? String(3)
-                string4 = try container.decodeIfPresent(String.self, forKey: .string4) ?? String(4.0)
-                string5 = try container.decodeIfPresent(String.self, forKey: .string5) ?? .init()
-                integer1 = try container.decodeIfPresent(Int.self, forKey: .integer1) ?? 1
-                integer2 = try container.decodeIfPresent(Int.self, forKey: .integer2) ?? Int(2)
-                integer3 = try container.decodeIfPresent(Int.self, forKey: .integer3) ?? Int(3.0)
-                integer4 = try container.decodeIfPresent(Int.self, forKey: .integer4) ?? .min
-                double1 = try container.decodeIfPresent(Double.self, forKey: .double1) ?? 1
-                double2 = try container.decodeIfPresent(Double.self, forKey: .double2) ?? 2.0
-                double3 = try container.decodeIfPresent(Double.self, forKey: .double3) ?? Double(3)
-                double4 = try container.decodeIfPresent(Double.self, forKey: .double4) ?? Double(4.0)
-                double5 = try container.decodeIfPresent(Double.self, forKey: .double5) ?? .pi
-                boolean1 = try container.decodeIfPresent(Bool.self, forKey: .boolean1) ?? true
-                boolean2 = try container.decodeIfPresent(Bool.self, forKey: .boolean2) ?? false
-                boolean3 = try container.decodeIfPresent(Bool.self, forKey: .boolean3) ?? Bool(true)
-                boolean4 = try container.decodeIfPresent(Bool.self, forKey: .boolean4) ?? Bool(false)
-                boolean5 = try container.decodeIfPresent(Bool.self, forKey: .boolean5) ?? .random()
+                self.string1 = try container.decodeIfPresent(String.self, forKey: .string1) ?? "str1"
+                self.string2 = try container.decodeIfPresent(String.self, forKey: .string2) ?? String("str2")
+                self.string3 = try container.decodeIfPresent(String.self, forKey: .string3) ?? String(3)
+                self.string4 = try container.decodeIfPresent(String.self, forKey: .string4) ?? String(4.0)
+                self.string5 = try container.decodeIfPresent(String.self, forKey: .string5) ?? .init()
+                self.integer1 = try container.decodeIfPresent(Int.self, forKey: .integer1) ?? 1
+                self.integer2 = try container.decodeIfPresent(Int.self, forKey: .integer2) ?? Int(2)
+                self.integer3 = try container.decodeIfPresent(Int.self, forKey: .integer3) ?? Int(3.0)
+                self.integer4 = try container.decodeIfPresent(Int.self, forKey: .integer4) ?? .min
+                self.double1 = try container.decodeIfPresent(Double.self, forKey: .double1) ?? 1
+                self.double2 = try container.decodeIfPresent(Double.self, forKey: .double2) ?? 2.0
+                self.double3 = try container.decodeIfPresent(Double.self, forKey: .double3) ?? Double(3)
+                self.double4 = try container.decodeIfPresent(Double.self, forKey: .double4) ?? Double(4.0)
+                self.double5 = try container.decodeIfPresent(Double.self, forKey: .double5) ?? .pi
+                self.boolean1 = try container.decodeIfPresent(Bool.self, forKey: .boolean1) ?? true
+                self.boolean2 = try container.decodeIfPresent(Bool.self, forKey: .boolean2) ?? false
+                self.boolean3 = try container.decodeIfPresent(Bool.self, forKey: .boolean3) ?? Bool(true)
+                self.boolean4 = try container.decodeIfPresent(Bool.self, forKey: .boolean4) ?? Bool(false)
+                self.boolean5 = try container.decodeIfPresent(Bool.self, forKey: .boolean5) ?? .random()
             }
         }
 
@@ -526,8 +526,8 @@ final class CodableMacrosTests: XCTestCase {
         
             public func encode(to encoder: any Encoder) throws {
                 var container = encoder.container(keyedBy: CodingKeys.self)
-                try container.encode(id, forKey: .id)
-                try container.encode(username, forKey: .username)
+                try container.encode(self.id, forKey: .id)
+                try container.encode(self.username, forKey: .username)
             }
         }
         """
@@ -557,8 +557,8 @@ final class CodableMacrosTests: XCTestCase {
         
             public func encode(to encoder: any Encoder) throws {
                 var container = encoder.container(keyedBy: CodingKeys.self)
-                try container.encode(id, forKey: .id)
-                try container.encode(username, forKey: .username)
+                try container.encode(self.id, forKey: .id)
+                try container.encode(self.username, forKey: .username)
             }
         }
 
@@ -701,8 +701,8 @@ final class CodableMacrosTests: XCTestCase {
 
             public init(from decoder: any Decoder) throws {
                 let container = try decoder.container(keyedBy: CodingKeys.self)
-                id = try container.decode(String.self, forKey: .id)
-                username = try container.decode(String.self, forKey: .username)
+                self.id = try container.decode(String.self, forKey: .id)
+                self.username = try container.decode(String.self, forKey: .username)
             }
         }
         
@@ -710,8 +710,8 @@ final class CodableMacrosTests: XCTestCase {
 
             public func encode(to encoder: any Encoder) throws {
                 var container = encoder.container(keyedBy: CodingKeys.self)
-                try container.encode(id, forKey: .id)
-                try container.encode(username, forKey: .username)
+                try container.encode(self.id, forKey: .id)
+                try container.encode(self.username, forKey: .username)
             }
         }
         """
@@ -742,14 +742,14 @@ final class CodableMacrosTests: XCTestCase {
         
             public required init(from decoder: any Decoder) throws {
                 let container = try decoder.container(keyedBy: CodingKeys.self)
-                id = try container.decode(String.self, forKey: .id)
-                username = try container.decode(String.self, forKey: .username)
+                self.id = try container.decode(String.self, forKey: .id)
+                self.username = try container.decode(String.self, forKey: .username)
             }
         
             public func encode(to encoder: any Encoder) throws {
                 var container = encoder.container(keyedBy: CodingKeys.self)
-                try container.encode(id, forKey: .id)
-                try container.encode(username, forKey: .username)
+                try container.encode(self.id, forKey: .id)
+                try container.encode(self.username, forKey: .username)
             }
         }
         
@@ -791,14 +791,14 @@ final class CodableMacrosTests: XCTestCase {
         
             public init(from decoder: any Decoder) throws {
                 let container = try decoder.container(keyedBy: CodingKeys.self)
-                id = try container.decode(String.self, forKey: .id)
-                username = try container.decode(String.self, forKey: .username)
+                self.id = try container.decode(String.self, forKey: .id)
+                self.username = try container.decode(String.self, forKey: .username)
             }
         
             public func encode(to encoder: any Encoder) throws {
                 var container = encoder.container(keyedBy: CodingKeys.self)
-                try container.encode(id, forKey: .id)
-                try container.encode(username, forKey: .username)
+                try container.encode(self.id, forKey: .id)
+                try container.encode(self.username, forKey: .username)
             }
         }
         
@@ -869,8 +869,8 @@ final class CodableMacrosTests: XCTestCase {
 
             public init(from decoder: any Decoder) throws {
                 let container = try decoder.container(keyedBy: CodingKeys.self)
-                id = try container.decode(String.self, forKey: .id)
-                username = try container.decode(String.self, forKey: .username)
+                self.id = try container.decode(String.self, forKey: .id)
+                self.username = try container.decode(String.self, forKey: .username)
             }
         }
         """
@@ -901,8 +901,8 @@ final class CodableMacrosTests: XCTestCase {
 
             public func encode(to encoder: any Encoder) throws {
                 var container = encoder.container(keyedBy: CodingKeys.self)
-                try container.encode(id, forKey: .id)
-                try container.encode(username, forKey: .username)
+                try container.encode(self.id, forKey: .id)
+                try container.encode(self.username, forKey: .username)
             }
         }
 
@@ -941,8 +941,8 @@ final class CodableMacrosTests: XCTestCase {
 
             public func encode(to encoder: any Encoder) throws {
                 var container = encoder.container(keyedBy: CodingKeys.self)
-                try container.encode(id, forKey: .id)
-                try container.encode(username, forKey: .username)
+                try container.encode(self.id, forKey: .id)
+                try container.encode(self.username, forKey: .username)
             }
         }
 

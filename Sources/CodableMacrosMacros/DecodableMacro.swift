@@ -169,9 +169,9 @@ extension DecodableMacro {
                         let name = parameters.name
                         let type = parameters.type
                         if let value = parameters.initializer?.value.description {
-                            "\(raw: name) = try container.decodeIfPresent(\(raw: type).self, forKey: .\(raw: name)) ?? \(raw: value)"
+                            "self.\(raw: name) = try container.decodeIfPresent(\(raw: type).self, forKey: .\(raw: name)) ?? \(raw: value)"
                         } else {
-                            "\(raw: name) = try container.decode(\(raw: type).self, forKey: .\(raw: name))"
+                            "self.\(raw: name) = try container.decode(\(raw: type).self, forKey: .\(raw: name))"
                         }
                     }
                 }

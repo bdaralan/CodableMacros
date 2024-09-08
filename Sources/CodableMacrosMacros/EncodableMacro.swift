@@ -116,7 +116,7 @@ extension EncodableMacro {
                     }
                     for parameters in properties.compactMap({ $0.parseDecodableParameters() }) {
                         let name = parameters.name
-                        "try container.encode(\(raw: name), forKey: .\(raw: name))"
+                        "try container.encode(self.\(raw: name), forKey: .\(raw: name))"
                     }
                 }
             )
