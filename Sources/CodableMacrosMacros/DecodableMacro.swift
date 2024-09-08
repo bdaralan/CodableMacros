@@ -65,8 +65,6 @@ extension DecodableMacro: ExtensionMacro {
         let modifiers = parseAccessModifiers(declaration.modifiers)
         let properties = declaration.memberBlock.members.filterStoredProperties()
         
-        let enumCodingKeys = makeCodingKeys(modifiers: modifiers, properties: properties)
-        
         let extensionInheritanceClause = InheritanceClauseSyntax(
             inheritedTypes: InheritedTypeListSyntax {
                 InheritedTypeSyntax(type: IdentifierTypeSyntax(name: "Decodable"))
@@ -75,6 +73,7 @@ extension DecodableMacro: ExtensionMacro {
         
         let extensionMembers = MemberBlockItemListSyntax {
             if !properties.isEmpty {
+                let enumCodingKeys = makeCodingKeys(modifiers: modifiers, properties: properties)
                 MemberBlockItemSyntax(leadingTrivia: .newlines(2), decl: enumCodingKeys)
             }
             if declaration.is(StructDeclSyntax.self) && !properties.isEmpty {
