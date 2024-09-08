@@ -11,24 +11,27 @@ extension DeclGroupSyntax {
             .compactMap({ $0.attributeName.as(IdentifierTypeSyntax.self) })
             .map(\.name.text)
     }
+}
+
+extension AttributeListSyntax {
     
     /// Update attributes list by removing and adding.
     ///
     /// - Parameter removing: Attribute names to be removed.
     /// - Parameter adding: Attribute names to be added.
-    mutating func updateAttributes(removing: Set<String>, adding: Set<String>) {
-        for index in attributes.indices.reversed() {
-            guard let attribute = attributes[index].as(AttributeSyntax.self) else { continue }
+    mutating func update(removing: Set<String>, adding: Set<String>) {
+        for (attribute, index) in zip(self, indices).reversed() {
+            guard let attribute = attribute.as(AttributeSyntax.self) else { continue }
             guard let name = attribute.attributeName.as(IdentifierTypeSyntax.self)?.name else { continue }
             guard removing.contains(name.text) else { continue }
-            attributes.remove(at: index)
+            remove(at: index)
         }
         for name in adding {
             let attribute = AttributeSyntax(
                 attributeName: IdentifierTypeSyntax(name: .identifier(name)),
                 trailingTrivia: .space
             )
-            attributes.append(AttributeListSyntax.Element(attribute))
+            append(AttributeListSyntax.Element(attribute))
         }
     }
 }

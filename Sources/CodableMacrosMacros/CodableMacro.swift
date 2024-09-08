@@ -3,33 +3,7 @@ import SwiftSyntaxBuilder
 import SwiftSyntaxMacros
 import SwiftDiagnostics
 
-public enum CodableMacro {
-    
-    enum Message: String, DiagnosticMessage {
-        
-        case unsupportedType
-        
-        case unexpected
-        
-        var diagnosticID: MessageID {
-            MessageID(domain: "CodableMacros", id: rawValue)
-        }
-    
-        var severity: DiagnosticSeverity {
-            switch self {
-            case .unsupportedType: .error
-            case .unexpected: .error
-            }
-        }
-        
-        var message: String {
-            switch self {
-            case .unsupportedType: "@Codable only supports struct or class at this time"
-            case .unexpected: "Encounter unexpected use case"
-            }
-        }
-    }
-}
+public enum CodableMacro {}
 
 // MARK: - MemberMacro
 
@@ -49,79 +23,64 @@ extension CodableMacro: MemberMacro {
             return []
         }
         
-        if declaration.is(StructDeclSyntax.self) {
-            return []
-        }
+        // show error message and fixit for change @Codable to @Decodable and @Encodable
+        var updateDeclaration = declaration
+        updateDeclaration.attributes.update(removing: ["Codable"], adding: ["Decodable", "Encodable"])
+        let change = FixIt.Change.replace(oldNode: Syntax(declaration), newNode: Syntax(updateDeclaration))
+        let fixit = FixIt(message: FixMessage.changeCodableToDecodableEncodable, changes: [change])
+        context.diagnose(Diagnostic(node: node, message: Message.changeCodableToDecodableEncodable, fixIt: fixit))
         
-        // for class the macro expands init(from:) and encode(to:) in the declaration
-        if declaration.is(ClassDeclSyntax.self) {
-            let modifiers = DecodableMacro.parseAccessModifiers(declaration.modifiers)
-            let properties = declaration.memberBlock.members.filterStoredProperties()
-            
-            var decodableConstructor = DecodableMacro.makeDecodableConstructor(modifiers: modifiers, properties: properties)
-            
-            // non-final class needs to add required key to satisfy the decodable conformance
-            if !declaration.modifiers.lazy.map(\.name.text).contains("final") {
-                let requiredKeyword = DeclModifierSyntax(name: .keyword(.required))
-                decodableConstructor.modifiers.append(requiredKeyword)
-            }
-            
-            let encodableEncodeMethod = EncodableMacro.makeEncodableEncodeMethod(modifiers: modifiers, properties: properties)
-            
-            return [DeclSyntax(decodableConstructor), DeclSyntax(encodableEncodeMethod)]
-        }
-        
-        // show unexpected use-case message
-        context.diagnose(Diagnostic(node: node, message: Message.unexpected))
         return []
     }
 }
 
-// MARK: - ExtensionMacro
+// MARK: - Diagnostic
 
-extension CodableMacro: ExtensionMacro {
-
-    public static func expansion(
-        of node: AttributeSyntax,
-        attachedTo declaration: some DeclGroupSyntax,
-        providingExtensionsOf type: some TypeSyntaxProtocol,
-        conformingTo protocols: [TypeSyntax],
-        in context: some MacroExpansionContext
-    ) throws -> [ExtensionDeclSyntax] {
-        let name = DecodableMacro.parseDeclarationName(declaration)
-        let modifiers = DecodableMacro.parseAccessModifiers(declaration.modifiers)
-        let properties = declaration.memberBlock.members.filterStoredProperties()
+extension CodableMacro {
+    
+    enum Message: String, DiagnosticMessage {
         
-        let enumCodingKeys = DecodableMacro.makeCodingKeys(modifiers: modifiers, properties: properties)
+        case unsupportedType
         
-        let extensionInheritanceClause = InheritanceClauseSyntax(
-            inheritedTypes: InheritedTypeListSyntax {
-                InheritedTypeSyntax(type: IdentifierTypeSyntax(name: "Codable"))
-            }
-        )
+        case changeCodableToDecodableEncodable
         
-        let extensionMembers = MemberBlockItemListSyntax {
-            if !properties.isEmpty {
-                MemberBlockItemSyntax(leadingTrivia: .newlines(2), decl: enumCodingKeys)
-            }
-            if declaration.is(StructDeclSyntax.self) && !properties.isEmpty {
-                let decodableConstructor = DecodableMacro.makeDecodableConstructor(modifiers: modifiers, properties: properties)
-                MemberBlockItemSyntax(leadingTrivia: .newlines(2), decl: decodableConstructor)
-            }
-            if declaration.is(StructDeclSyntax.self) && !properties.isEmpty {
-                MemberBlockItemSyntax(
-                    leadingTrivia: .newlines(2),
-                    decl: EncodableMacro.makeEncodableEncodeMethod(modifiers: modifiers, properties: properties)
-                )
+        case unexpected
+        
+        var diagnosticID: MessageID {
+            MessageID(domain: "CodableMacros", id: rawValue)
+        }
+    
+        var severity: DiagnosticSeverity {
+            switch self {
+            case .unsupportedType: .error
+            case .changeCodableToDecodableEncodable: .error
+            case .unexpected: .error
             }
         }
         
-        let extensionDecl = ExtensionDeclSyntax(
-            extendedType: IdentifierTypeSyntax(name: .identifier(name)),
-            inheritanceClause: extensionInheritanceClause,
-            memberBlock: MemberBlockSyntax(members: extensionMembers)
-        )
+        var message: String {
+            switch self {
+            case .unsupportedType: "@Codable only supports struct or class at this time"
+            case .changeCodableToDecodableEncodable: "@Codable is currently unavailable change to @Decodable and @Encodable"
+            case .unexpected: "Encounter unexpected use case"
+            }
+        }
+    }
+    
+    enum FixMessage: FixItMessage {
         
-        return [extensionDecl]
+        case changeCodableToDecodableEncodable
+        
+        var message: String {
+            switch self {
+            case .changeCodableToDecodableEncodable: "Change @Codable to @Decodable and @Encodable"
+            }
+        }
+        
+        var fixItID: MessageID {
+            switch self {
+            case .changeCodableToDecodableEncodable: Message.changeCodableToDecodableEncodable.diagnosticID
+            }
+        }
     }
 }

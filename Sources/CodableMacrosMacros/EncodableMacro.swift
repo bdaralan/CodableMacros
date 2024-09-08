@@ -3,33 +3,7 @@ import SwiftSyntaxBuilder
 import SwiftSyntaxMacros
 import SwiftDiagnostics
 
-public enum EncodableMacro {
-    
-    enum Message: String, DiagnosticMessage {
-        
-        case unsupportedType
-        
-        case unexpected
-        
-        var diagnosticID: MessageID {
-            MessageID(domain: "CodableMacros", id: rawValue)
-        }
-    
-        var severity: DiagnosticSeverity {
-            switch self {
-            case .unsupportedType: .error
-            case .unexpected: .error
-            }
-        }
-        
-        var message: String {
-            switch self {
-            case .unsupportedType: "@Encodable only supports struct or class at this time"
-            case .unexpected: "Encounter unexpected use case"
-            }
-        }
-    }
-}
+public enum EncodableMacro {}
 
 // MARK: - MemberMacro
 
@@ -46,14 +20,6 @@ extension EncodableMacro: MemberMacro {
         guard supported else {
             // show unsupported declaration diagnostic message
             context.diagnose(Diagnostic(node: node, message: Message.unsupportedType))
-            return []
-        }
-        
-        let attributeNames = declaration.parseAttributeNames()
-        
-        // cannot use Decodable and Encodable together
-        // DecodableMacro will be the one to emit the diagnostic message
-        if attributeNames.contains("Decodable") && attributeNames.contains("Encodable") {
             return []
         }
         
@@ -88,12 +54,6 @@ extension EncodableMacro: ExtensionMacro {
         in context: some MacroExpansionContext
     ) throws -> [ExtensionDeclSyntax] {
         let attributeNames = declaration.parseAttributeNames()
-        
-        // cannot use Decodable and Encodable together
-        if attributeNames.contains("Decodable") && attributeNames.contains("Encodable") {
-            return []
-        }
-        
         let name = DecodableMacro.parseDeclarationName(declaration)
         let modifiers = DecodableMacro.parseAccessModifiers(declaration.modifiers)
         let properties = declaration.memberBlock.members.filterStoredProperties()
@@ -108,7 +68,7 @@ extension EncodableMacro: ExtensionMacro {
         )
         
         let extensionMembers = MemberBlockItemListSyntax {
-            if !properties.isEmpty {
+            if !attributeNames.contains("Decodable") && !properties.isEmpty {
                 MemberBlockItemSyntax(leadingTrivia: .newlines(2), decl: enumCodingKeys)
             }
             if declaration.is(StructDeclSyntax.self) && !properties.isEmpty {
@@ -162,5 +122,35 @@ extension EncodableMacro {
                 }
             )
         )
+    }
+}
+
+// MARK: - Diagnostic
+
+extension EncodableMacro {
+    
+    enum Message: String, DiagnosticMessage {
+        
+        case unsupportedType
+        
+        case unexpected
+        
+        var diagnosticID: MessageID {
+            MessageID(domain: "CodableMacros", id: rawValue)
+        }
+    
+        var severity: DiagnosticSeverity {
+            switch self {
+            case .unsupportedType: .error
+            case .unexpected: .error
+            }
+        }
+        
+        var message: String {
+            switch self {
+            case .unsupportedType: "@Encodable only supports struct or class at this time"
+            case .unexpected: "Encounter unexpected use case"
+            }
+        }
     }
 }
