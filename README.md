@@ -4,9 +4,9 @@ A list of macros that help remove some boilerplate codes when working with `Coda
 The goal is to make working with `Codable` easier in most use cases but not to replace `Codable`.
 
 ``` swift
-// Attaching Codable() macro to struct or class
+// Attach Decodable() or Encodable() macro to struct or class
 
-@Codable struct User {
+@Decodable @Encodable struct User {
 
   // behaves the same way as Codable protocol
   let id: String
@@ -14,15 +14,15 @@ The goal is to make working with `Codable` easier in most use cases but not to r
   // provides custom key for CodingKeys enum
   @CodingKey("user_tag") let username: String
 
-  // provides initial value when value is not presented
+  // provides initial value when decode value is not presented
   var biography: String = ""
 }
 ```
 
 ``` swift
-// Codable() macro expansion
+// Decodable() and Encodable() macros expansion
 
-extension User: Codable {
+extension User: Decodable {
 
     enum CodingKeys: String, CodingKey {
         case id
@@ -36,6 +36,9 @@ extension User: Codable {
         username = try container.decode(String.self, forKey: .username)
         biography = try container.decodeIfPresent(String.self, forKey: .biography) ?? ""
     }
+}
+
+extension User: Encodable {
 
     func encode(to encoder: any Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
